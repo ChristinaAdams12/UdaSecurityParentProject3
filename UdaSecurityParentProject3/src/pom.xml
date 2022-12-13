@@ -8,6 +8,7 @@
     <artifactId>UdaSecurityParentProject3</artifactId>
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
+
     <build>
         <pluginManagement>
             <plugins>
@@ -21,8 +22,8 @@
                 </plugin>
             </plugins>
         </pluginManagement>
-
     </build>
+
     <modules>
         <module>Security</module>
         <module>Image</module>
