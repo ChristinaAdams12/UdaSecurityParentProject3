@@ -35,7 +35,7 @@ public class SecurityServiceTest {
         securityService.changeSensorActivationStatus(sensor, true);
         securityService.setAlarmStatus(AlarmStatus.PENDING_ALARM);
 
-        verify(securitySecurity).setAlarmStatus(AlarmStatus.PENDING_ALARM);
+        verify(securityService).setAlarmStatus(AlarmStatus.PENDING_ALARM);
 
 
     }
