@@ -26,17 +26,16 @@ public class SecurityServiceTest {
         securityService = new SecurityService(securityRepository, imageService);
     }
 
-    @Test
+   @Test
     public void alarmArmed_and_sensorActivated_setSystemTo_pendingAlarmStatus() {
 
         Sensor sensor = new Sensor("Front door", SensorType.DOOR);
 
         securityService.setArmingStatus(ArmingStatus.ARMED_AWAY);
+        securityRepository.getAlarmStatus();
         securityService.changeSensorActivationStatus(sensor, true);
-        securityService.setAlarmStatus(AlarmStatus.PENDING_ALARM);
 
-        verify(securityService).setAlarmStatus(AlarmStatus.PENDING_ALARM);
-
+        verify(securityRepository).setAlarmStatus(AlarmStatus.PENDING_ALARM);
 
     }
 
