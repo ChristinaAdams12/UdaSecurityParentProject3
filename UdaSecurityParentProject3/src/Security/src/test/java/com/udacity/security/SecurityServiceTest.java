@@ -31,8 +31,6 @@ public class SecurityServiceTest {
 
         Sensor sensor = new Sensor("Front door", SensorType.DOOR);
 
-        securityService.setArmingStatus(ArmingStatus.ARMED_AWAY);
-        securityRepository.getAlarmStatus();
         securityService.changeSensorActivationStatus(sensor, true);
 
         verify(securityRepository).setAlarmStatus(AlarmStatus.PENDING_ALARM);
