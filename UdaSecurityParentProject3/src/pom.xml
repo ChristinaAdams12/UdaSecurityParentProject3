@@ -47,6 +47,12 @@
                 <version>2.0.3</version>
             </dependency>
             <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-log4j12</artifactId>
+                <version>2.0.3</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
                 <groupId>software.amazon.awssdk</groupId>
                 <artifactId>auth</artifactId>
                 <version>2.18.28</version>
@@ -59,10 +65,9 @@
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter</artifactId>
-                <version>RELEASE</version>
+                <version>5.7.0</version>
                 <scope>test</scope>
             </dependency>
-
         </dependencies>
 
 
