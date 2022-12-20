@@ -108,15 +108,14 @@ public class SecurityService {
      */
     public void changeSensorActivationStatus(Sensor sensor, Boolean active) {
         if(securityRepository.getAlarmStatus() != AlarmStatus.ALARM) {
-            if (!sensor.getActive() && active) {
+            if (active) {
                 handleSensorActivated();
-            } else if (sensor.getActive() && !active) {
+            } else if (sensor.getActive()) {
                 handleSensorDeactivated();
             }
         }
             sensor.setActive(active);
             securityRepository.updateSensor(sensor);
-
     }
 
     /**
@@ -148,4 +147,3 @@ public class SecurityService {
         return securityRepository.getArmingStatus();
     }
 }
-
