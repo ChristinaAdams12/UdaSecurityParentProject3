@@ -1,7 +1,6 @@
 package com.udacity.security.service;
 
 import com.udacity.image.interfaces.ImageService;
-import com.udacity.image.service.FakeImageService;
 import com.udacity.security.application.StatusListener;
 import com.udacity.security.data.AlarmStatus;
 import com.udacity.security.data.ArmingStatus;
@@ -116,6 +115,24 @@ public class SecurityService {
         }
             sensor.setActive(active);
             securityRepository.updateSensor(sensor);
+    }
+
+    //deactivates sensors if the system is armed
+    public void setSensorsToInactive (Set<Sensor> sensors){
+        if(securityRepository.getArmingStatus() != ArmingStatus.DISARMED) {
+            sensors.forEach(sensor -> sensor.setActive(false));
+        }
+        sensors.forEach(sensor -> securityRepository.updateSensor(sensor));
+    }
+
+    public boolean allSensorsInActive(boolean inActive) {
+
+        //if all sensors are inactive, return true
+            if(securityRepository.getSensors().stream().allMatch(sensor -> !sensor.getActive())){
+                return inActive;
+            }
+            return false;
+
     }
 
     /**

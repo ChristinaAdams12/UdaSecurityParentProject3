@@ -14,7 +14,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.awt.image.BufferedImage;
-import java.util.HashSet;
 import java.util.Set;
 
 import static org.mockito.Mockito.*;
@@ -30,22 +29,30 @@ public class SecurityServiceTest {
 
     private SecurityService securityService;
 
-    //Sensor sensor =  new Sensor("Door", SensorType.DOOR);
+    //single sensor for test purposes
+    Sensor singleSensor =  new Sensor("Door", SensorType.DOOR);
 
-    Sensor sensor1 =  new Sensor("Door", SensorType.DOOR);
-    Sensor sensor2 = new Sensor("Window", SensorType.WINDOW);
-    Sensor sensor3 = new Sensor("Motion", SensorType.MOTION);
+    //retrieves the set of sensors from SecurityRepository
+    private Set<Sensor> getSensorSet() {
 
-    //private Set<Sensor> sensorSet = new HashSet<>();
+        Sensor sensor1 = new Sensor("Door", SensorType.DOOR);
+        Sensor sensor2 = new Sensor("Window", SensorType.WINDOW);
+        Sensor sensor3 = new Sensor("Motion", SensorType.MOTION);
+
+        securityService.addSensor(sensor1);
+        securityRepository.updateSensor(sensor1);
+        securityService.addSensor(sensor2);
+        securityRepository.updateSensor(sensor2);
+        securityService.addSensor(sensor3);
+        securityRepository.updateSensor(sensor3);
+
+        return securityRepository.getSensors();
+    }
 
     @BeforeEach
     void init() {
+
         securityService = new SecurityService(securityRepository, imageService);
-
-        securityService.addSensor(sensor1);
-        securityService.addSensor(sensor2);
-        securityService.addSensor(sensor3);
-
     }
 
     //Tests Requirement #1. If alarm is armed and a sensor becomes activated, put the system into pending alarm status.
@@ -56,7 +63,7 @@ public class SecurityServiceTest {
 
         when(securityRepository.getArmingStatus()).thenReturn(ArmingStatus.ARMED_HOME);
         when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.NO_ALARM);
-        securityService.changeSensorActivationStatus(sensor1, true);
+        securityService.changeSensorActivationStatus(singleSensor, true);
 
         verify(securityRepository,times(1)).setAlarmStatus(AlarmStatus.PENDING_ALARM);
     }
@@ -69,7 +76,7 @@ public class SecurityServiceTest {
 
         when(securityRepository.getArmingStatus()).thenReturn(ArmingStatus.ARMED_AWAY);
         when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.PENDING_ALARM);
-        securityService.changeSensorActivationStatus(sensor1, true);
+        securityService.changeSensorActivationStatus(singleSensor, true);
 
         verify(securityRepository,times(1)).setAlarmStatus(AlarmStatus.ALARM);
     }
@@ -79,15 +86,23 @@ public class SecurityServiceTest {
     @DisplayName("Test 3")
     public void pendingAlarm_and_allSensorsInactive_returnSystemToNoAlarmStatus() {
 
-        //sensor1.setActive(true);
-        //when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.PENDING_ALARM);
-        //securityService.changeSensorActivationStatus(sensor1,false);
-
-        securityService.getSensors().forEach(sensor -> sensor.setActive(true));
+        /*
+        singleSensor.setActive(true);
         when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.PENDING_ALARM);
-        securityService.getSensors().forEach(sensor -> securityService.changeSensorActivationStatus(sensor,false));
+        securityService.changeSensorActivationStatus(singleSensor, false);
 
         verify(securityRepository).setAlarmStatus(AlarmStatus.NO_ALARM);
+
+        */
+
+        //when(securityRepository.getSensors()).thenReturn(getSensorSet());
+        getSensorSet().forEach(sensor -> sensor.setActive(true));
+        when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.PENDING_ALARM);
+        securityService.changeSensorActivationStatus(getSensorSet(), false);
+
+        verify(securityRepository).setAlarmStatus(AlarmStatus.NO_ALARM);
+
+
 
     }
 
@@ -98,7 +113,7 @@ public class SecurityServiceTest {
     public void activeAlarm_changeInSensorState_doesNotAffectAlarmState(boolean sensorStatus){
 
         when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.ALARM);
-        securityService.changeSensorActivationStatus(sensor1,sensorStatus);
+        securityService.changeSensorActivationStatus(singleSensor,sensorStatus);
 
         verify(securityRepository,never()).setAlarmStatus(any(AlarmStatus.class));
 
@@ -111,8 +126,8 @@ public class SecurityServiceTest {
     public void sensorActivated_whileAlreadyActive_and_SystemPending_changeToAlarmState(){
 
         when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.PENDING_ALARM);
-        sensor1.setActive(true);
-        securityService.changeSensorActivationStatus(sensor1,true);
+        singleSensor.setActive(true);
+        securityService.changeSensorActivationStatus(singleSensor,true);
 
         verify(securityRepository,times(1)).setAlarmStatus(AlarmStatus.ALARM);
 
@@ -124,9 +139,9 @@ public class SecurityServiceTest {
     @DisplayName("Test 6")
     public void sensorDeactivated_whileAlreadyInactive_alarmStateDoesNotChange(AlarmStatus alarmStatus){
 
-        sensor1.setActive(false);
+        singleSensor.setActive(false);
         when(securityRepository.getAlarmStatus()).thenReturn(alarmStatus);
-        securityService.changeSensorActivationStatus(sensor1,false);
+        securityService.changeSensorActivationStatus(singleSensor,false);
 
         verify(securityRepository,never()).setAlarmStatus(any(AlarmStatus.class));
 
@@ -151,7 +166,7 @@ public class SecurityServiceTest {
     @DisplayName("Test 8")
     public void imageServiceIdentifiesImage_doesNotContainCat_changeStatusToNoAlarm_ifSensorsNotActive(){
 
-        sensor1.setActive(false);
+        singleSensor.setActive(false);
         when(imageService.imageContainsCat(any(),anyFloat())).thenReturn(false);
         securityService.processImage(mock(BufferedImage.class));
 
@@ -176,12 +191,11 @@ public class SecurityServiceTest {
     public void systemArmed_setAllSensorsToInactive(ArmingStatus armingStatus){
 
         when(securityRepository.getArmingStatus()).thenReturn(armingStatus);
-        when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.NO_ALARM);
-        securityService.getSensors().forEach(sensor -> securityService.changeSensorActivationStatus(sensor,false));
+        securityService.setSensorsToInactive(getSensorSet());
 
-        verify(securityRepository,times(1)).getSensors().forEach(sensor -> sensor.setActive(false));
-        
+        verify(securityRepository, times(1)).getSensors().forEach(sensor -> sensor.setActive(false));
     }
-    
+
+
 
 }
