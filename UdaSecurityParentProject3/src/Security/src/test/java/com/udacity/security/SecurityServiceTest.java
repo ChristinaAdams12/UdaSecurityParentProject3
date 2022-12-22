@@ -32,12 +32,18 @@ public class SecurityServiceTest {
     //single sensor for test purposes
     Sensor singleSensor =  new Sensor("Door", SensorType.DOOR);
 
+    //set of sensors for test purposes
+    Set<Sensor> sensors;
+
+/*
     //retrieves the set of sensors from SecurityRepository
     private Set<Sensor> getSensorSet() {
 
         Sensor sensor1 = new Sensor("Door", SensorType.DOOR);
         Sensor sensor2 = new Sensor("Window", SensorType.WINDOW);
         Sensor sensor3 = new Sensor("Motion", SensorType.MOTION);
+
+        Set<Sensor> sensors = securityService.getSensors();
 
         securityService.addSensor(sensor1);
         securityRepository.updateSensor(sensor1);
@@ -46,13 +52,18 @@ public class SecurityServiceTest {
         securityService.addSensor(sensor3);
         securityRepository.updateSensor(sensor3);
 
-        return securityRepository.getSensors();
+        when(securityRepository.getSensors()).thenReturn(sensors);
+        return sensors;
     }
+
+ */
+
 
     @BeforeEach
     void init() {
 
         securityService = new SecurityService(securityRepository, imageService);
+
     }
 
     //Tests Requirement #1. If alarm is armed and a sensor becomes activated, put the system into pending alarm status.
@@ -93,16 +104,14 @@ public class SecurityServiceTest {
 
         verify(securityRepository).setAlarmStatus(AlarmStatus.NO_ALARM);
 
-        */
-
-        //when(securityRepository.getSensors()).thenReturn(getSensorSet());
-        getSensorSet().forEach(sensor -> sensor.setActive(true));
+         */
+        when(securityRepository.getSensors()).thenReturn(sensors);
         when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.PENDING_ALARM);
-        securityService.changeSensorActivationStatus(getSensorSet(), false);
-
+        for (Sensor sensor : sensors) {
+            securityService.changeSensorActivationStatus(sensor,false);
+        }
         verify(securityRepository).setAlarmStatus(AlarmStatus.NO_ALARM);
-
-
+        
 
     }
 
@@ -190,10 +199,11 @@ public class SecurityServiceTest {
     @DisplayName("Test 10")
     public void systemArmed_setAllSensorsToInactive(ArmingStatus armingStatus){
 
+        when(securityRepository.getSensors()).thenReturn(sensors);
         when(securityRepository.getArmingStatus()).thenReturn(armingStatus);
-        securityService.setSensorsToInactive(getSensorSet());
+        securityService.setSensorsToInactive(sensors);
 
-        verify(securityRepository, times(1)).getSensors().forEach(sensor -> sensor.setActive(false));
+        verify(securityRepository).getSensors().forEach(sensor -> sensor.setActive(false));
     }
 
 

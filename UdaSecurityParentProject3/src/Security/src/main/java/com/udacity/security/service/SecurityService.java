@@ -117,23 +117,26 @@ public class SecurityService {
             securityRepository.updateSensor(sensor);
     }
 
-    //deactivates sensors if the system is armed
-    public void setSensorsToInactive (Set<Sensor> sensors){
-        if(securityRepository.getArmingStatus() != ArmingStatus.DISARMED) {
-            sensors.forEach(sensor -> sensor.setActive(false));
-        }
-        sensors.forEach(sensor -> securityRepository.updateSensor(sensor));
-    }
-
-    public boolean allSensorsInActive(boolean inActive) {
-
-        //if all sensors are inactive, return true
-            if(securityRepository.getSensors().stream().allMatch(sensor -> !sensor.getActive())){
-                return inActive;
+    public boolean isAnySensorActive(boolean active) {
+        for(Sensor sensor : securityRepository.getSensors()){
+            if(sensor.getActive() == true) {
+                return active;
             }
-            return false;
-
+        }
+        return false;
     }
+    //deactivates sensors if the system is armed
+    public void setSensorsToInactive(Set<Sensor> sensors){
+        if(securityRepository.getArmingStatus() != ArmingStatus.DISARMED) {
+            if(isAnySensorActive(true)){
+                for(Sensor sensor : sensors){
+                    sensor.setActive(false);
+                    securityRepository.updateSensor(sensor);
+                }
+            }
+        }
+    }
+
 
     /**
      * Send an image to the SecurityService for processing. The securityService will use its provided

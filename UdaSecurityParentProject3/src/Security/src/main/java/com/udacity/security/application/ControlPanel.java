@@ -40,7 +40,7 @@ public class ControlPanel extends JPanel {
             v.addActionListener(e -> {
                 securityService.setArmingStatus(k);
                 buttonMap.forEach((status, button) -> button.setBackground(status == k ? status.getColor() : null));
-                sensorPanel.sensorStatusChanged();
+                //sensorPanel.sensorStatusChanged();
             });
         });
 
