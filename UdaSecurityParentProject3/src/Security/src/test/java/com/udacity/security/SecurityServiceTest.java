@@ -37,17 +37,10 @@ public class SecurityServiceTest {
     //set of sensors for test purposes
     Set<Sensor> sensors = new HashSet<>();
 
-    Sensor sensor1 = new Sensor("Door", SensorType.DOOR);
-    Sensor sensor2 = new Sensor("Window", SensorType.WINDOW);
-    Sensor sensor3 = new Sensor("Motion", SensorType.MOTION);
-
     @BeforeEach
     void init() {
 
         securityService = new SecurityService(securityRepository, imageService);
-        sensors.add(sensor1);
-        sensors.add(sensor2);
-        sensors.add(sensor3);
 
     }
 
@@ -59,7 +52,7 @@ public class SecurityServiceTest {
 
         when(securityRepository.getArmingStatus()).thenReturn(armingStatus);
         when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.NO_ALARM);
-        securityService.changeSensorActivationStatus(sensor1, true);
+        securityService.changeSensorActivationStatus(singleSensor, true);
 
         verify(securityRepository,times(1)).setAlarmStatus(AlarmStatus.PENDING_ALARM);
     }
@@ -73,7 +66,7 @@ public class SecurityServiceTest {
 
         when(securityRepository.getArmingStatus()).thenReturn(armingStatus);
         when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.PENDING_ALARM);
-        securityService.changeSensorActivationStatus(sensor1, true);
+        securityService.changeSensorActivationStatus(singleSensor, true);
 
 
         verify(securityRepository,times(1)).setAlarmStatus(AlarmStatus.ALARM);
@@ -247,10 +240,6 @@ public class SecurityServiceTest {
     }
 
  */
-
-
-
-
 
 
 }
