@@ -106,36 +106,56 @@ public class SecurityService {
      * @param active
      */
     public void changeSensorActivationStatus(Sensor sensor, Boolean active) {
-        if(securityRepository.getAlarmStatus() != AlarmStatus.ALARM) {
+        if (securityRepository.getAlarmStatus() != AlarmStatus.ALARM) {
             if (active) {
                 handleSensorActivated();
-            } else if (sensor.getActive()) {
+            }else if (securityRepository.getAlarmStatus() == AlarmStatus.PENDING_ALARM && !sensor.getActive()){
+                return;
+            }else if(!sensor.getActive()) {
                 handleSensorDeactivated();
             }
         }
+        else if(securityRepository.getAlarmStatus() == AlarmStatus.ALARM){
+            handleSensorDeactivated();
+        }
+
             sensor.setActive(active);
             securityRepository.updateSensor(sensor);
     }
 
+
+
+    //checks if any sensor in the system is active
     public boolean isAnySensorActive(boolean active) {
-        for(Sensor sensor : securityRepository.getSensors()){
-            if(sensor.getActive() == true) {
-                return active;
-            }
+        if (securityRepository.getSensors().stream().anyMatch(sensor -> sensor.getActive() == active)){
+            return active;
+        }
+        else
+            return false;
+    }
+
+    public boolean areAllSensorsInactive(boolean inactive){
+        if(securityRepository.getSensors().stream().allMatch(sensor -> !sensor.getActive())) {
+            handleSensorDeactivated();
+            return inactive;
         }
         return false;
     }
-    //deactivates sensors if the system is armed
-    public void setSensorsToInactive(Set<Sensor> sensors){
+
+
+    //deactivates ALL sensors if the system is armed
+    public void resetAllSensors(Set<Sensor> sensors){
+        //resets all sensors to inactive
         if(securityRepository.getArmingStatus() != ArmingStatus.DISARMED) {
-            if(isAnySensorActive(true)){
-                for(Sensor sensor : sensors){
-                    sensor.setActive(false);
-                    securityRepository.updateSensor(sensor);
-                }
-            }
+            securityRepository.getSensors().forEach(sensor -> sensor.setActive(false));
+            securityRepository.getSensors().forEach(sensor -> securityRepository.updateSensor(sensor));
         }
+        //resets all sensors to active
+        else if(securityRepository.getArmingStatus() == ArmingStatus.DISARMED) {
+            securityRepository.getSensors().forEach(sensor -> sensor.setActive(true));
+            securityRepository.getSensors().forEach(sensor -> securityRepository.updateSensor(sensor));
     }
+}
 
 
     /**
@@ -167,3 +187,5 @@ public class SecurityService {
         return securityRepository.getArmingStatus();
     }
 }
+
+

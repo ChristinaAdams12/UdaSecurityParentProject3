@@ -2,7 +2,6 @@ package com.udacity.security.application;
 
 import com.udacity.image.interfaces.ImageService;
 import com.udacity.image.service.AwsImageService;
-import com.udacity.image.service.FakeImageService;
 import com.udacity.security.data.PretendDatabaseSecurityRepositoryImpl;
 import com.udacity.security.data.SecurityRepository;
 import com.udacity.security.service.SecurityService;
