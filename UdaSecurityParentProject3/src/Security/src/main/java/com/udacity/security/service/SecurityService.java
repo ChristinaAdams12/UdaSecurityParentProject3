@@ -115,9 +115,11 @@ public class SecurityService {
                 handleSensorDeactivated();
             }
         }
-        else if(securityRepository.getAlarmStatus() == AlarmStatus.ALARM){
+        /*else if(securityRepository.getAlarmStatus() == AlarmStatus.ALARM){
             handleSensorDeactivated();
         }
+
+         */
 
             sensor.setActive(active);
             securityRepository.updateSensor(sensor);
