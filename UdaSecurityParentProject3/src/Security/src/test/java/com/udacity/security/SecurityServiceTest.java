@@ -48,6 +48,7 @@ public class SecurityServiceTest {
         sensors.add(sensor1);
         sensors.add(sensor2);
         sensors.add(sensor3);
+
     }
 
     //Tests Requirement #1. If alarm is armed and a sensor becomes activated, put the system into pending alarm status.
@@ -56,11 +57,12 @@ public class SecurityServiceTest {
     @DisplayName("Test 1")
     public void alarmArmed_and_sensorActivated_setSystemTo_pendingAlarmStatus(ArmingStatus armingStatus) {
 
-
+        securityService.addSensor(sensor1);
         when(securityRepository.getArmingStatus()).thenReturn(armingStatus);
         when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.NO_ALARM);
         securityService.changeSensorActivationStatus(sensor1, true);
 
+        System.out.println(securityRepository.getSensors());
         verify(securityRepository,times(1)).setAlarmStatus(AlarmStatus.PENDING_ALARM);
     }
 
@@ -86,9 +88,9 @@ public class SecurityServiceTest {
 
         when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.PENDING_ALARM);
         when(securityRepository.getSensors()).thenReturn(sensors);
-        securityService.getSensors();
         securityService.areAllSensorsInactive(true);
         securityService.getAlarmStatus();
+        securityService.getSensors();
 
         System.out.println(securityRepository.getSensors());
         verify(securityRepository,times(1)).setAlarmStatus(AlarmStatus.NO_ALARM);
