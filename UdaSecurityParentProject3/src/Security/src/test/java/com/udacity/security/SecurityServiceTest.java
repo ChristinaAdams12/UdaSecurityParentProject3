@@ -1,6 +1,7 @@
 package com.udacity.security;
 
 import com.udacity.image.interfaces.ImageService;
+import com.udacity.security.application.StatusListener;
 import com.udacity.security.data.*;
 import com.udacity.security.service.SecurityService;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,8 +31,7 @@ public class SecurityServiceTest {
 
     private SecurityService securityService;
 
-    //single sensor for test purposes
-    //Sensor singleSensor =  new Sensor("Door", SensorType.DOOR);
+    private StatusListener statusListener;
 
     //set of sensors for test purposes
     Set<Sensor> sensors = new HashSet<>();
@@ -48,7 +48,6 @@ public class SecurityServiceTest {
         sensors.add(sensor1);
         sensors.add(sensor2);
         sensors.add(sensor3);
-
     }
 
     //Tests Requirement #1. If alarm is armed and a sensor becomes activated, put the system into pending alarm status.
@@ -57,7 +56,6 @@ public class SecurityServiceTest {
     @DisplayName("Test 1")
     public void alarmArmed_and_sensorActivated_setSystemTo_pendingAlarmStatus(ArmingStatus armingStatus) {
 
-        securityService.addSensor(sensor1);
         when(securityRepository.getArmingStatus()).thenReturn(armingStatus);
         when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.NO_ALARM);
         securityService.changeSensorActivationStatus(sensor1, true);
@@ -88,9 +86,8 @@ public class SecurityServiceTest {
 
         when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.PENDING_ALARM);
         when(securityRepository.getSensors()).thenReturn(sensors);
-        securityService.areAllSensorsInactive(true);
+        securityService.allSensorsInactiveSensorActivationStatus();
         securityService.getAlarmStatus();
-        securityService.getSensors();
 
         System.out.println(securityRepository.getSensors());
         verify(securityRepository,times(1)).setAlarmStatus(AlarmStatus.NO_ALARM);
@@ -116,9 +113,10 @@ public class SecurityServiceTest {
     @DisplayName("Test 5")
     public void sensorActivated_whileAlreadyActive_and_SystemPending_changeToAlarmState(){
 
-        sensor1.setActive(true);
-        when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.PENDING_ALARM);
+        when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.NO_ALARM);
         securityService.changeSensorActivationStatus(sensor1,true);
+        when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.PENDING_ALARM);
+        securityService.changeSensorActivationStatus(sensor2,true);
 
         verify(securityRepository,times(1)).setAlarmStatus(AlarmStatus.ALARM);
 
@@ -157,8 +155,10 @@ public class SecurityServiceTest {
     @DisplayName("Test 8")
     public void imageServiceIdentifiesImage_doesNotContainCat_changeStatusToNoAlarm_ifSensorsNotActive(){
 
+
         when(securityRepository.getSensors()).thenReturn(sensors);
-        securityService.isAnySensorActive(false);
+        when(securityRepository.getArmingStatus()).thenReturn(ArmingStatus.ARMED_HOME);
+        securityService.resetAllSensors(sensors);
         when(imageService.imageContainsCat(any(),anyFloat())).thenReturn(false);
         securityService.processImage(mock(BufferedImage.class));
 
@@ -192,19 +192,6 @@ public class SecurityServiceTest {
         System.out.println(securityRepository.getSensors());
         assert(securityRepository).getSensors().stream().noneMatch(Sensor::getActive);
 
-        /*
-
-        when(securityRepository.getSensors()).thenReturn(sensors);
-        System.out.println(securityRepository.getSensors());
-        when(securityRepository.getArmingStatus()).thenReturn(ArmingStatus.DISARMED);
-        securityService.changeSensorActivationStatus(sensor1,true);
-        securityService.changeSensorActivationStatus(sensor2,true);
-        when(securityRepository.getArmingStatus()).thenReturn(armingStatus);
-
-        verify(securityRepository.getSensors()).stream().allMatch(sensor -> !sensor.getActive());
-
-         */
-
     }
 
     //Tests Requirement #11. If the system is armed-home while the camera shows a cat, set the alarm status to alarm.
@@ -219,42 +206,75 @@ public class SecurityServiceTest {
         verify(securityRepository,times(1)).setAlarmStatus(AlarmStatus.ALARM);
 
     }
-/*
-    //retrieves the set of sensors from SecurityRepository
-    private Set<Sensor> getSensorSet() {
 
-       Sensor sensor1 = new Sensor("Door", SensorType.DOOR);
-       Sensor sensor2 = new Sensor("Window", SensorType.WINDOW);
-       Sensor sensor3 = new Sensor("Motion", SensorType.MOTION);
-
-       sensors.add(sensor1);
-       sensors.add(sensor2);
-       sensors.add(sensor3);
-
-       return sensors;
-    }
-
- */
-/*
-    //Tests if system is in Alarm Status and a sensor is deactivated, then the system changes to Pending Alarm.
+    //Tests if system is in Alarm Status and system is Disarmed and a sensor is deactivated, then the
+    // system changes to Pending Alarm.
     @Test
     @DisplayName("Test 12")
-    public void systemAlarmStatus_and_sensorDeactivated_systemChangesToPendingAlarm(){
+    public void AlarmActive_and_SystemDisarmed_systemChangesToPendingAlarm(){
 
-        securityService.changeSensorActivationStatus(singleSensor,true);
         when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.ALARM);
-        securityService.changeSensorActivationStatus(singleSensor, false);
+        when(securityRepository.getArmingStatus()).thenReturn(ArmingStatus.DISARMED);
+        securityService.changeSensorActivationStatus(sensor1,false);
 
         verify(securityRepository,times(1)).setAlarmStatus(AlarmStatus.PENDING_ALARM);
 
     }
 
- */
+    //Tests if a sensor is added in SecurityService, that it is happening in SecurityRepository
+    @Test
+    @DisplayName("Test 13")
+    public void addSensor_to_securityService_isAddedTo_securityRepository() {
 
+       securityService.addSensor(sensor1);
+       verify(securityRepository,times(1)).addSensor(sensor1);
 
+    }
 
+    //Tests if a sensor is removed in SecurityService, that it is happening in SecurityRepository
+    @Test
+    @DisplayName("Test 14")
+    public void removeSensor_from_securityService_isRemovedFrom_securityRepository() {
+
+        securityService.removeSensor(sensor2);
+        verify(securityRepository,times(1)).removeSensor(sensor2);
+
+    }
+    //Tests if a statusListener is added to SecurityService
+    @Test
+    @DisplayName("Test 15")
+    public void addStatusListener_to_securityService() {
+
+        securityService.addStatusListener(statusListener);
+
+        assert(securityService).getStatusListeners().contains(statusListener);
+
+    }
+
+    //Tests if a statusListener is removed from SecurityService
+    @Test
+    @DisplayName("Test 16")
+    public void removeStatusListener_from_securityService() {
+
+        securityService.addStatusListener(statusListener);
+        securityService.removeStatusListener(statusListener);
+
+        assert(securityService).getStatusListeners().isEmpty();
+
+    }
+
+    //Tests if getSenors is called in SecurityService, that it returns sensors from SecurityRepository
+    @Test
+    @DisplayName("Test 17")
+    public void getSensors_calledInSecurityService_returnsSensorsFromSecurityRepository(){
+
+        when(securityService.getSensors()).thenReturn(sensors);
+
+        System.out.println(securityService.getSensors());
+        System.out.println(securityRepository.getSensors());
+
+    }
 
 
 
 }
-

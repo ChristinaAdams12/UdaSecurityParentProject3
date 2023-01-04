@@ -49,7 +49,7 @@ public class SecurityService {
     private void catDetected(Boolean cat) {
         if(cat && getArmingStatus() == ArmingStatus.ARMED_HOME) {
             setAlarmStatus(AlarmStatus.ALARM);
-        } else {
+        } else if(!cat && allSensorsInactive(true)){
             setAlarmStatus(AlarmStatus.NO_ALARM);
         }
 
@@ -114,36 +114,27 @@ public class SecurityService {
             }else if(!sensor.getActive()) {
                 handleSensorDeactivated();
             }
+        }else if(securityRepository.getArmingStatus() == ArmingStatus.DISARMED &&
+                securityRepository.getAlarmStatus() == AlarmStatus.ALARM){
+                handleSensorDeactivated();
         }
-        /*else if(securityRepository.getAlarmStatus() == AlarmStatus.ALARM){
-            handleSensorDeactivated();
-        }
-
-         */
-
             sensor.setActive(active);
             securityRepository.updateSensor(sensor);
     }
 
-
-
-    //checks if any sensor in the system is active
-    public boolean isAnySensorActive(boolean active) {
-        if (securityRepository.getSensors().stream().anyMatch(sensor -> sensor.getActive() == active)){
-            return active;
-        }
-        else
-            return false;
-    }
-
-    public boolean areAllSensorsInactive(boolean inactive){
-        if(securityRepository.getSensors().stream().allMatch(sensor -> !sensor.getActive())) {
-            handleSensorDeactivated();
+    public boolean allSensorsInactive(boolean inactive) {
+        if(securityRepository.getSensors().stream().noneMatch((Sensor::getActive))){
             return inactive;
         }
         return false;
     }
 
+    //takes the system through the handleSensorDeactivated method if all sensors are inactive
+    public void allSensorsInactiveSensorActivationStatus() {
+        if(securityRepository.getSensors().stream().noneMatch(Sensor::getActive))
+            handleSensorDeactivated();
+
+    }
 
     //deactivates ALL sensors if the system is armed
     public void resetAllSensors(Set<Sensor> sensors){
@@ -187,6 +178,11 @@ public class SecurityService {
 
     public ArmingStatus getArmingStatus() {
         return securityRepository.getArmingStatus();
+    }
+
+    public Set<StatusListener> getStatusListeners(){
+        return statusListeners;
+
     }
 }
 
