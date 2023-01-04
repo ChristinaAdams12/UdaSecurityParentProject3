@@ -60,7 +60,6 @@ public class SecurityServiceTest {
         when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.NO_ALARM);
         securityService.changeSensorActivationStatus(sensor1, true);
 
-        System.out.println(securityRepository.getSensors());
         verify(securityRepository,times(1)).setAlarmStatus(AlarmStatus.PENDING_ALARM);
     }
 
@@ -75,7 +74,6 @@ public class SecurityServiceTest {
         when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.PENDING_ALARM);
         securityService.changeSensorActivationStatus(sensor1, true);
 
-
         verify(securityRepository,times(1)).setAlarmStatus(AlarmStatus.ALARM);
     }
 
@@ -84,12 +82,13 @@ public class SecurityServiceTest {
     @DisplayName("Test 3")
     public void pendingAlarm_and_allSensorsInactive_returnSystemToNoAlarmStatus() {
 
-        when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.PENDING_ALARM);
         when(securityRepository.getSensors()).thenReturn(sensors);
-        securityService.allSensorsInactiveSensorActivationStatus();
+        securityService.setArmingStatus(ArmingStatus.ARMED_HOME);
+        when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.PENDING_ALARM);
+        securityService.changeSensorActivationStatus(sensor1,true);
+        securityService.changeSensorActivationStatus(sensor1,false);
         securityService.getAlarmStatus();
 
-        System.out.println(securityRepository.getSensors());
         verify(securityRepository,times(1)).setAlarmStatus(AlarmStatus.NO_ALARM);
 
     }
@@ -116,7 +115,7 @@ public class SecurityServiceTest {
         when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.NO_ALARM);
         securityService.changeSensorActivationStatus(sensor1,true);
         when(securityRepository.getAlarmStatus()).thenReturn(AlarmStatus.PENDING_ALARM);
-        securityService.changeSensorActivationStatus(sensor2,true);
+        securityService.changeSensorActivationStatus(sensor1,true);
 
         verify(securityRepository,times(1)).setAlarmStatus(AlarmStatus.ALARM);
 
@@ -128,7 +127,7 @@ public class SecurityServiceTest {
     @DisplayName("Test 6")
     public void sensorDeactivated_whileAlreadyInactive_alarmStateDoesNotChange(AlarmStatus alarmStatus){
 
-        sensor1.setActive(false);
+        securityService.changeSensorActivationStatus(sensor1,false);
         when(securityRepository.getAlarmStatus()).thenReturn(alarmStatus);
         securityService.changeSensorActivationStatus(sensor1,false);
 
@@ -157,12 +156,10 @@ public class SecurityServiceTest {
 
 
         when(securityRepository.getSensors()).thenReturn(sensors);
-        when(securityRepository.getArmingStatus()).thenReturn(ArmingStatus.ARMED_HOME);
-        securityService.resetAllSensors(sensors);
+        securityService.setArmingStatus(ArmingStatus.ARMED_HOME);
         when(imageService.imageContainsCat(any(),anyFloat())).thenReturn(false);
         securityService.processImage(mock(BufferedImage.class));
 
-        System.out.println(securityRepository.getSensors());
         verify(securityRepository,times(1)).setAlarmStatus(AlarmStatus.NO_ALARM);
     }
 
@@ -183,13 +180,12 @@ public class SecurityServiceTest {
     @DisplayName("Test 10")
     public void systemArmed_setAllSensorsToInactive(ArmingStatus armingStatus){
 
-        when(securityRepository.getSensors()).thenReturn(sensors);
         when(securityRepository.getArmingStatus()).thenReturn(ArmingStatus.DISARMED);
-        securityService.resetAllSensors(sensors);
-        when(securityRepository.getArmingStatus()).thenReturn(armingStatus);
-        securityService.resetAllSensors(sensors);
-
-        System.out.println(securityRepository.getSensors());
+        when(securityRepository.getSensors()).thenReturn(sensors);
+        securityService.changeSensorActivationStatus(sensor1,true);
+        securityService.changeSensorActivationStatus(sensor2,true);
+        securityService.setArmingStatus(armingStatus);
+        
         assert(securityRepository).getSensors().stream().noneMatch(Sensor::getActive);
 
     }

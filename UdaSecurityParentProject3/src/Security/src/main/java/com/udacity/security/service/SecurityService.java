@@ -38,7 +38,10 @@ public class SecurityService {
         if(armingStatus == ArmingStatus.DISARMED) {
             setAlarmStatus(AlarmStatus.NO_ALARM);
         }
-        securityRepository.setArmingStatus(armingStatus);
+        else {
+            securityRepository.getSensors().forEach(sensor -> sensor.setActive(false));
+            securityRepository.setArmingStatus(armingStatus);
+        }
     }
 
     /**
@@ -47,9 +50,11 @@ public class SecurityService {
      * @param cat True if a cat is detected, otherwise false.
      */
     private void catDetected(Boolean cat) {
+        //If cat is true and Armed Home status is set, set alarm to Alarm status
         if(cat && getArmingStatus() == ArmingStatus.ARMED_HOME) {
             setAlarmStatus(AlarmStatus.ALARM);
-        } else if(!cat && allSensorsInactive(true)){
+        //If no cat and all sensors are inactive, set Alarm status to No Alarm
+        } else if(!cat && allSensorsInactive()){
             setAlarmStatus(AlarmStatus.NO_ALARM);
         }
 
@@ -107,13 +112,20 @@ public class SecurityService {
      */
     public void changeSensorActivationStatus(Sensor sensor, Boolean active) {
         if (securityRepository.getAlarmStatus() != AlarmStatus.ALARM) {
-            if (active) {
+            //if sensor is not already active and active/true is selected, go to handleSensorActivated
+            if(!sensor.getActive() && active) {
                 handleSensorActivated();
-            }else if (securityRepository.getAlarmStatus() == AlarmStatus.PENDING_ALARM && !sensor.getActive()){
-                return;
-            }else if(!sensor.getActive()) {
+            //if sensor is already active and active/true is selected, go to handleSensorActivated
+            }else if (sensor.getActive() && active) {
+                handleSensorActivated();
+            //if sensor is already active and not active/false is selected, go to handleSensorDeactivated
+            }else if (sensor.getActive() && !active) {
                 handleSensorDeactivated();
+            //if sensor is not already active and active/false is selected, do nothing
+            }else if(!sensor.getActive() && !active) {
+                return;
             }
+        //if system is disarmed and Alarm status is set to Alarm, go to handleSensorDeactivated
         }else if(securityRepository.getArmingStatus() == ArmingStatus.DISARMED &&
                 securityRepository.getAlarmStatus() == AlarmStatus.ALARM){
                 handleSensorDeactivated();
@@ -122,34 +134,10 @@ public class SecurityService {
             securityRepository.updateSensor(sensor);
     }
 
-    public boolean allSensorsInactive(boolean inactive) {
-        if(securityRepository.getSensors().stream().noneMatch((Sensor::getActive))){
-            return inactive;
-        }
-        return false;
+    //checks if all sensors are inactive
+    public boolean allSensorsInactive() {
+        return securityRepository.getSensors().stream().noneMatch((Sensor::getActive));
     }
-
-    //takes the system through the handleSensorDeactivated method if all sensors are inactive
-    public void allSensorsInactiveSensorActivationStatus() {
-        if(securityRepository.getSensors().stream().noneMatch(Sensor::getActive))
-            handleSensorDeactivated();
-
-    }
-
-    //deactivates ALL sensors if the system is armed
-    public void resetAllSensors(Set<Sensor> sensors){
-        //resets all sensors to inactive
-        if(securityRepository.getArmingStatus() != ArmingStatus.DISARMED) {
-            securityRepository.getSensors().forEach(sensor -> sensor.setActive(false));
-            securityRepository.getSensors().forEach(sensor -> securityRepository.updateSensor(sensor));
-        }
-        //resets all sensors to active
-        else if(securityRepository.getArmingStatus() == ArmingStatus.DISARMED) {
-            securityRepository.getSensors().forEach(sensor -> sensor.setActive(true));
-            securityRepository.getSensors().forEach(sensor -> securityRepository.updateSensor(sensor));
-    }
-}
-
 
     /**
      * Send an image to the SecurityService for processing. The securityService will use its provided
