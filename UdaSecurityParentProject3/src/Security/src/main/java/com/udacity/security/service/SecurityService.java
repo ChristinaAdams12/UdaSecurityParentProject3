@@ -35,11 +35,14 @@ public class SecurityService {
      * @param armingStatus
      */
     public void setArmingStatus(ArmingStatus armingStatus) {
+        //if system is disarmed, alarm status gets set to No Alarm
         if(armingStatus == ArmingStatus.DISARMED) {
             setAlarmStatus(AlarmStatus.NO_ALARM);
         }
         else {
+            //sets all sensors inactive
             securityRepository.getSensors().forEach(sensor -> sensor.setActive(false));
+            //sets the Arming Status
             securityRepository.setArmingStatus(armingStatus);
         }
     }
@@ -50,10 +53,10 @@ public class SecurityService {
      * @param cat True if a cat is detected, otherwise false.
      */
     private void catDetected(Boolean cat) {
-        //If cat is true and Armed Home status is set, set alarm to Alarm status
+        //if a cat is detected and Armed Home status is set, set alarm to Alarm status
         if(cat && getArmingStatus() == ArmingStatus.ARMED_HOME) {
             setAlarmStatus(AlarmStatus.ALARM);
-        //If no cat and all sensors are inactive, set Alarm status to No Alarm
+        //if no cat is detected and all sensors are inactive, set Alarm status to No Alarm
         } else if(!cat && allSensorsInactive()){
             setAlarmStatus(AlarmStatus.NO_ALARM);
         }

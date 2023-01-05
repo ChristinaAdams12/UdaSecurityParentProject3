@@ -180,12 +180,12 @@ public class SecurityServiceTest {
     @DisplayName("Test 10")
     public void systemArmed_setAllSensorsToInactive(ArmingStatus armingStatus){
 
-        when(securityRepository.getArmingStatus()).thenReturn(ArmingStatus.DISARMED);
         when(securityRepository.getSensors()).thenReturn(sensors);
+        when(securityRepository.getArmingStatus()).thenReturn(ArmingStatus.DISARMED);
         securityService.changeSensorActivationStatus(sensor1,true);
         securityService.changeSensorActivationStatus(sensor2,true);
         securityService.setArmingStatus(armingStatus);
-        
+
         assert(securityRepository).getSensors().stream().noneMatch(Sensor::getActive);
 
     }
