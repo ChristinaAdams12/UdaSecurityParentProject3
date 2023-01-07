@@ -4,7 +4,7 @@ module Security {
     requires java.desktop;
     requires java.prefs;
     requires com.google.gson;
-    requires guava;
+    requires com.google.common;
     exports com.udacity.security.application;
     exports com.udacity.security.data;
     exports com.udacity.security.service;
