@@ -51,7 +51,8 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>19.0</version>
+            <version>31.1-jre</version>
+            <type>bundle</type>
         </dependency>
         <dependency>
             <groupId>org.example</groupId>
